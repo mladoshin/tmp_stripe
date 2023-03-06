@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+
+    <style type="text/css">
+      section.pricing {
+        background: #eeeeee;
+      }
+
+      .pricing .card {
+        border: none;
+        border-radius: 1rem;
+        transition: all 0.2s;
+        box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .pricing hr {
+        margin: 1.5rem 0;
+      }
+
+      .pricing .card-title {
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+        letter-spacing: .1rem;
+        font-weight: bold;
+      }
+
+      .pricing .card-price {
+        font-size: 3rem;
+        margin: 0;
+      }
+
+      .pricing .card-price .period {
+        font-size: 0.8rem;
+      }
+
+      .pricing ul li {
+        margin-bottom: .3rem;
+      }
+
+      .pricing .text-muted {
+        opacity: 0.7;
+      }
+
+      .pricing .btn {
+        font-size: 80%;
+        border-radius: 5rem;
+        letter-spacing: .1rem;
+        font-weight: bold;
+        padding: 1rem;
+        opacity: 0.7;
+        transition: all 0.2s;
+      }
+
+      /* Hover Effects on Card */
+
+      @media (min-width: 992px) {
+        .pricing .card:hover {
+            margin-top: -.25rem;
+            margin-bottom: .25rem;
+            box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .pricing .card:hover .btn {
+            opacity: 1;
+        }
+      }
+    </style>
+
+    <!-- Slider -->
+    <style>
+      .slider input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background-color: #007bff;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+      
+      .slider input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background-color: #007bff;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+      
+      .slider input[type="range"]::-webkit-slider-runnable-track {
+        background-color: #fefefe;
+        height: 6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      
+      .slider input[type="range"]::-moz-range-track {
+        background-color: #fefefe;
+        height: 6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      
+      .slider input[type="range"]::-moz-focus-outer {
+        border: none;
+      }
+      
+      .slider input[type="range"]::-webkit-slider-thumb:active {
+        background-color: #0062cc;
+      }
+      
+      .slider input[type="range"]::-moz-range-thumb:active {
+        background-color: #0062cc;
+      }
+      
+      .slider input[type="range"]:active::-webkit-slider-runnable-track {
+        background-color: #d6d6d6;
+      }
+      
+      .slider input[type="range"]:active::-moz-range-track {
+        background-color: #d6d6d6;
+      }
+      
+      .slider input[type="range"]:focus::-webkit-slider-runnable-track {
+        background-color: #d6d6d6;
+      }
+      
+      .slider input[type="range"]:focus::-moz-range-track {
+        background-color: #d6d6d6;
+      }
+      
+      .slider input[type="range"]::-webkit-slider-runnable-track::-webkit-slider-thumb {
+        background-color: #007bff;
+      }
+      
+      .slider input[type="range"]::-moz-range-track::-moz-range-thumb {
+        background-color: #007bff;
+      }
+      
+      .slider input[type="range"]::-webkit-slider-runnable-track::-webkit-slider-thumb:hover {
+        background-color: #0062cc;
+      }
+      
+      .slider input[type="range"]::-moz-range-track::-moz-range-thumb:hover {
+        background-color: #0062cc;
+      }
+      
+      /* blue background color for the selected range */
+      .slider input[type="range"]::-webkit-slider-runnable-track::-moz-range-thumb,
+      .slider input[type="range"]::-moz-range-track::-moz-range-thumb {
+        background-color: #007bff;
+      }
+      
+      /* remove default styling */
+      .slider input[type="range"] {
+        -webkit-appearance: none;
+        margin: 0;
+        width: 100%;
+      }
+      
+      .slider {
+        margin: 2rem 0;
+      }
+    </style>
+
+    <script>
+      let checkout;
+
+      const domain = '';
+      const baseCheckoutUrl = `https://${domain}/checkout`;
+
+      const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+      });
+
+      let errorModal;
+      let slider;
+
+      window.onload = () => {
+        errorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal'));
+        slider = document.getElementById('slider');
+
+        // Show error modal with message
+        error = (message) => {
+          document.getElementById('errorModalMessage').innerHTML = message;
+          errorModal.show();
+        }
+
+
+        slider.addEventListener('change', () => {
+          const value = slider.value;
+
+          switch(value) {
+            case 0:
+              break;
+          }
+        });
+
+        // Checkout function
+        checkout = () => {
+          const accountName = params.accountName;
+
+          if(accountName === undefined) {
+            return error('Account name is undefined.');
+          }
+
+          fetch(baseCheckoutUrl, {
+            method: 'POST',
+            body: {
+              priceId,
+              accountName,
+            },
+            headers: {
+              'content-type': 'application/json',
+            },
+          })
+        }
+      }
+    </script>
+    
+  </head>
+  <body>
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert" id="errorModalMessage"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="pricing py-5">
+      <div class="container">
+        <div class="slider">
+          <input type="range" class="form-range" min="0" max="100" step="10" id="slider">
+        </div>
+
+        <div class="row">
+          <!-- Tabs navs -->
+          <ul class="nav nav-tabs justify-content-center" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="channels-tab" data-bs-toggle="tab" data-bs-target="#channels-tab-pane" type="button" role="tab" aria-controls="channels-tab-pane" aria-selected="true">Channels</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="email-campaign-tab" data-bs-toggle="tab" data-bs-target="#email-campaign-tab-pane" type="button" role="tab" aria-controls="email-campaign-tab-pane" aria-selected="false">Email Campaign</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="automation-tab" data-bs-toggle="tab" data-bs-target="#automation-tab-pane" type="button" role="tab" aria-controls="automation-tab-pane" aria-selected="false">Automation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="integrations-tab" data-bs-toggle="tab" data-bs-target="#integrations-tab-pane" type="button" role="tab" aria-controls="integrations-tab-pane" aria-selected="false">Integrations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tracking-and-reporting-tab" data-bs-toggle="tab" data-bs-target="#tracking-and-reporting-tab-pane" type="button" role="tab" aria-controls="tracking-and-reporting-tab-pane" aria-selected="false">Tracking & Reporting</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="Advanced-tab-pane" aria-selected="false">Advanced</button>
+            </li>
+          </ul>
+
+          <!-- Tabs Content -->
+          <div class="tab-content" id="myTabContent">
+            <div class="tab-pane show active" id="channels-tab-pane" role="tabpanel" aria-labelledby="channels-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Channels</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Email</span></li>
+                              <li><span class="badge bg-danger">SMS</span></li>
+                              <li><span class="badge bg-success">Drag & Drop Email Designer</span></li>
+                              <li><span class="badge bg-danger">Basic Forms</span></li>
+                              <li><span class="badge bg-success">Mobile Apps</span></li>
+                              <li><span class="badge bg-success">Inbox Browser Extension</span></li>
+                              <li><span class="badge bg-success">Landing Pages</span></li>
+                              <li><span class="badge bg-success">Facebook Custom Audiences</span></li>
+                              <li><span class="badge bg-danger">Facebook Lead Ads</span></li>
+                              <li><span class="badge bg-danger">Site Message</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Channels</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Email</span></li>
+                              <li><span class="badge bg-success">SMS with add-on</span></li>
+                              <li><span class="badge bg-success">Drag & Drop Email Designer</span></li>
+                              <li><span class="badge bg-success">Advanced Forms</span></li>
+                              <li><span class="badge bg-success">Mobile Apps</span></li>
+                              <li><span class="badge bg-success">Inbox Browser Extension</span></li>
+                              <li><span class="badge bg-success">Landing Pages</span></li>
+                              <li><span class="badge bg-success">Facebook Custom Audiences</span></li>
+                              <li><span class="badge bg-success">Facebook Lead Ads</span></li>
+                              <li><span class="badge bg-danger">Site Message</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Channels</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Email</span></li>
+                              <li><span class="badge bg-success">SMS with add-on</span></li>
+                              <li><span class="badge bg-success">Drag & Drop Email Designer</span></li>
+                              <li><span class="badge bg-success">Advanced Forms</span></li>
+                              <li><span class="badge bg-success">Mobile Apps</span></li>
+                              <li><span class="badge bg-success">Inbox Browser Extension</span></li>
+                              <li><span class="badge bg-success">Landing Pages</span></li>
+                              <li><span class="badge bg-success">Facebook Custom Audiences</span></li>
+                              <li><span class="badge bg-success">Facebook Lead Ads</span></li>
+                              <li><span class="badge bg-success">Site Message</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Channels</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Email</span></li>
+                              <li><span class="badge bg-success">SMS with add-on</span></li>
+                              <li><span class="badge bg-success">Drag & Drop Email Designer</span></li>
+                              <li><span class="badge bg-success">Advanced Forms</span></li>
+                              <li><span class="badge bg-success">Mobile Apps</span></li>
+                              <li><span class="badge bg-success">Inbox Browser Extension</span></li>
+                              <li><span class="badge bg-success">Landing Pages</span></li>
+                              <li><span class="badge bg-success">Facebook Custom Audiences</span></li>
+                              <li><span class="badge bg-success">Facebook Lead Ads</span></li>
+                              <li><span class="badge bg-success">Site Message</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="email-campaign-tab-pane" role="tabpanel" aria-labelledby="email-campaign-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Email Campaign</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-danger">SMS Automation</span></li>
+                              <li><span class="badge bg-danger">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-danger">Automations Map</span></li>
+                              <li><span class="badge bg-danger">Lead Scoring</span></li>
+                              <li><span class="badge bg-danger">Conversions</span></li>
+                              <li><span class="badge bg-danger">Split Automations</span></li>
+                              <li><span class="badge bg-danger">Custom Objects</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Email Campaign</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-success">Conversions</span></li>
+                              <li><span class="badge bg-danger">Split Automations</span></li>
+                              <li><span class="badge bg-danger">Custom Objects</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Email Campaign</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-success">Conversions</span></li>
+                              <li><span class="badge bg-success">Split Automations</span></li>
+                              <li><span class="badge bg-success">Custom Objects</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Email Campaign</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-success">Conversions</span></li>
+                              <li><span class="badge bg-success">Split Automations</span></li>
+                              <li><span class="badge bg-success">Custom Objects</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="automation-tab-pane" role="tabpanel" aria-labelledby="automation-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Automation</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-danger">SMS Automation</span></li>
+                              <li><span class="badge bg-danger">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-danger">Automations Map</span></li>
+                              <li><span class="badge bg-danger">Lead Scoring</span></li>
+                              <li><span class="badge bg-danger">Conversions</span></li>
+                              <li><span class="badge bg-danger">Split Automations</span></li>
+                              <li><span class="badge bg-danger">Custom Objects</span></li>
+                              <li><span class="badge bg-danger">1 User Seats</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Automation</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-danger">Conversions</span></li>
+                              <li><span class="badge bg-danger">Split Automations</span></li>
+                              <li><span class="badge bg-danger">Custom Objects</span></li>
+                              <li><span class="badge bg-success">3 User Seats</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Automation</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-success">Conversions</span></li>
+                              <li><span class="badge bg-success">Split Automations</span></li>
+                              <li><span class="badge bg-danger">Custom Objects</span></li>
+                              <li><span class="badge bg-success">5 User Seats</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Automation</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Marketing Automation</span></li>
+                              <li><span class="badge bg-success">Email Automation</span></li>
+                              <li><span class="badge bg-success">SMS Automation (+ SMS Add-on)</span></li>
+                              <li><span class="badge bg-success">Ecommerce Automation</span></li>
+                              <li><span class="badge bg-success">850+ Automation Recipes</span></li>
+                              <li><span class="badge bg-success">Segmentation</span></li>
+                              <li><span class="badge bg-success">Automations Map</span></li>
+                              <li><span class="badge bg-success">Lead Scoring</span></li>
+                              <li><span class="badge bg-success">Conversions</span></li>
+                              <li><span class="badge bg-success">Split Automations</span></li>
+                              <li><span class="badge bg-success">Custom Objects</span></li>
+                              <li><span class="badge bg-success">10 User Seats</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="integrations-tab-pane" role="tabpanel" aria-labelledby="integrations-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Integrations</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-danger">WooCommerce</span></li>
+                              <li><span class="badge bg-danger">Shopify</span></li>
+                              <li><span class="badge bg-danger">BigCommerce</span></li>
+                              <li><span class="badge bg-danger">Magento</span></li>
+                              <li><span class="badge bg-danger">Square</span></li>
+                              <li><span class="badge bg-danger">Salesforce</span></li>
+                              <li><span class="badge bg-danger">Microsoft Dynamics 365</span></li>
+                              <li><span class="badge bg-success">870+ Integrations</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Integrations</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">WooCommerce</span></li>
+                              <li><span class="badge bg-success">Shopify</span></li>
+                              <li><span class="badge bg-success">BigCommerce</span></li>
+                              <li><span class="badge bg-success">Magento</span></li>
+                              <li><span class="badge bg-success">Square</span></li>
+                              <li><span class="badge bg-danger">Salesforce</span></li>
+                              <li><span class="badge bg-danger">Microsoft Dynamics 365</span></li>
+                              <li><span class="badge bg-success">870+ Integrations</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Integrations</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">WooCommerce</span></li>
+                              <li><span class="badge bg-success">Shopify</span></li>
+                              <li><span class="badge bg-success">BigCommerce</span></li>
+                              <li><span class="badge bg-success">Magento</span></li>
+                              <li><span class="badge bg-success">Square</span></li>
+                              <li><span class="badge bg-success">Salesforce</span></li>
+                              <li><span class="badge bg-success">Microsoft Dynamics 365</span></li>
+                              <li><span class="badge bg-success">870+ Integrations</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Integrations</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">WooCommerce</span></li>
+                              <li><span class="badge bg-success">Shopify</span></li>
+                              <li><span class="badge bg-success">BigCommerce</span></li>
+                              <li><span class="badge bg-success">Magento</span></li>
+                              <li><span class="badge bg-success">Square</span></li>
+                              <li><span class="badge bg-success">Salesforce</span></li>
+                              <li><span class="badge bg-success">Microsoft Dynamics 365</span></li>
+                              <li><span class="badge bg-success">870+ Integrations</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tracking-and-reporting-tab-pane" role="tabpanel" aria-labelledby="integrations-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Tracking & Reporting</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Site Tracking</span></li>
+                              <li><span class="badge bg-success">Link & Event Tracking</span></li>
+                              <li><span class="badge bg-success">Automation Reports</span></li>
+                              <li><span class="badge bg-success">Campaign Reports</span></li>
+                              <li><span class="badge bg-success">Goals</span></li>
+                              <li><span class="badge bg-danger">Marketing Revenue Report</span></li>
+                              <li><span class="badge bg-danger">Store Performance</span></li>
+                              <li><span class="badge bg-danger">Attribution</span></li>
+                              <li><span class="badge bg-danger">Custom Reports</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Tracking & Reporting</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Site Tracking</span></li>
+                              <li><span class="badge bg-success">Link & Event Tracking</span></li>
+                              <li><span class="badge bg-success">Automation Reports</span></li>
+                              <li><span class="badge bg-success">Campaign Reports</span></li>
+                              <li><span class="badge bg-success">Goals</span></li>
+                              <li><span class="badge bg-success">Marketing Revenue Report</span></li>
+                              <li><span class="badge bg-success">Store Performance</span></li>
+                              <li><span class="badge bg-danger">Attribution</span></li>
+                              <li><span class="badge bg-danger">Custom Reports</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Tracking & Reporting</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Site Tracking</span></li>
+                              <li><span class="badge bg-success">Link & Event Tracking</span></li>
+                              <li><span class="badge bg-success">Automation Reports</span></li>
+                              <li><span class="badge bg-success">Campaign Reports</span></li>
+                              <li><span class="badge bg-success">Goals</span></li>
+                              <li><span class="badge bg-success">Marketing Revenue Report</span></li>
+                              <li><span class="badge bg-success">Store Performance</span></li>
+                              <li><span class="badge bg-success">Attribution</span></li>
+                              <li><span class="badge bg-danger">Custom Reports</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Tracking & Reporting</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">Site Tracking</span></li>
+                              <li><span class="badge bg-success">Link & Event Tracking</span></li>
+                              <li><span class="badge bg-success">Automation Reports</span></li>
+                              <li><span class="badge bg-success">Campaign Reports</span></li>
+                              <li><span class="badge bg-success">Goals</span></li>
+                              <li><span class="badge bg-success">Marketing Revenue Report</span></li>
+                              <li><span class="badge bg-success">Store Performance</span></li>
+                              <li><span class="badge bg-success">Attribution</span></li>
+                              <li><span class="badge bg-success">Custom Reports</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
+              <div class="row">
+                <!-- Free Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Free</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Advanced</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">API & Webhooks</span></li>
+                              <li><span class="badge bg-success">Unlimited Inactive Contacts</span></li>
+                              <li><span class="badge bg-danger">Database Sync</span></li>
+                              <li><span class="badge bg-danger">Custom Account Domain</span></li>
+                              <li><span class="badge bg-danger">Branded Forms & Landing Pages</span></li>
+                              <li><span class="badge bg-danger">Single Sign-On (SSO)</span></li>
+                              <li><span class="badge bg-danger">HIPAA Support</span></li>
+                              <li><span class="badge bg-danger">Uptime SLA</span></li>
+                              <li><span class="badge bg-danger">Custom Mailserver Domain</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Plus Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Plus</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Advanced</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">API & Webhooks</span></li>
+                              <li><span class="badge bg-success">Unlimited Inactive Contacts</span></li>
+                              <li><span class="badge bg-success">Database Sync</span></li>
+                              <li><span class="badge bg-success">Custom Account Domain</span></li>
+                              <li><span class="badge bg-success">Branded Forms & Landing Pages</span></li>
+                              <li><span class="badge bg-danger">Single Sign-On (SSO)</span></li>
+                              <li><span class="badge bg-danger">HIPAA Support</span></li>
+                              <li><span class="badge bg-danger">Uptime SLA</span></li>
+                              <li><span class="badge bg-danger">Custom Mailserver Domain</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Professional Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Professional</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Advanced</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">API & Webhooks</span></li>
+                              <li><span class="badge bg-success">Unlimited Inactive Contacts</span></li>
+                              <li><span class="badge bg-success">Database Sync</span></li>
+                              <li><span class="badge bg-success">Custom Account Domain</span></li>
+                              <li><span class="badge bg-success">Branded Forms & Landing Pages</span></li>
+                              <li><span class="badge bg-danger">Single Sign-On (SSO)</span></li>
+                              <li><span class="badge bg-danger">HIPAA Support</span></li>
+                              <li><span class="badge bg-danger">Uptime SLA</span></li>
+                              <li><span class="badge bg-danger">Custom Mailserver Domain</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              
+                <!-- Enterprise Tier -->
+                <div class="col-lg-3">
+                  <div class="card mb-5 mb-lg-0">
+                      <div class="card-body">
+                          <h5 class="card-title text-muted text-uppercase text-center">Enterprise</h5>
+                          <h6 class="card-price text-center">$0<span class="period">/month</span></h6>
+                          <hr>
+                          <h6 class="mb-2 text-center">Advanced</h6>
+                          <ul class="fa-ul list-unstyled text-center">
+                              <li><span class="badge bg-success">API & Webhooks</span></li>
+                              <li><span class="badge bg-success">Unlimited Inactive Contacts</span></li>
+                              <li><span class="badge bg-success">Database Sync</span></li>
+                              <li><span class="badge bg-success">Custom Account Domain</span></li>
+                              <li><span class="badge bg-success">Branded Forms & Landing Pages</span></li>
+                              <li><span class="badge bg-success">Single Sign-On (SSO)</span></li>
+                              <li><span class="badge bg-success">HIPAA Support</span></li>
+                              <li><span class="badge bg-success">Uptime SLA</span></li>
+                              <li><span class="badge bg-success">Custom Mailserver Domain</span></li>
+                          </ul>
+                          <a href="#" class="btn btn-block btn-sm w-100 mt-3 btn-primary text-uppercase">Checkout</a>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          
+        </div>
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  </body>
+</html>
