@@ -17,13 +17,17 @@ export class CheckoutService {
     billingPeriod: BillingPeriod,
     accountName: string,
   ) {
-    const priceIdsByContacts = (
-      await this.stripeService.getPricesByProduct(plan)
-    ).data.filter((p: Stripe.Price) => {
-      return p.metadata.contacts === contacts.toString();
+    const prices = (await this.stripeService.getPrices()).data;
+
+    const priceIdsByContacts = prices.filter((p: Stripe.Price) => {
+      return p.metadata.limit_subscribers === contacts.toString();
     });
 
-    const priceId = priceIdsByContacts.find((p: Stripe.Price) => {
+    const filteredByProduct = priceIdsByContacts.filter((p) => {
+      return p.nickname.toLowerCase().indexOf(plan) !== -1;
+    });
+
+    const priceId = filteredByProduct.find((p: Stripe.Price) => {
       if (billingPeriod === BillingPeriod.MONTHLY) {
         return p.recurring.interval === 'month';
       } else {

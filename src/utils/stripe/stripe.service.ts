@@ -42,9 +42,8 @@ export class StripeService {
     };
   }
 
-  async getPricesByProduct(plan: Plan) {
+  async getPrices() {
     return this.stripe.prices.list({
-      product: plan.charAt(0).toUpperCase() + plan.substring(1),
       limit: 100,
     });
   }
