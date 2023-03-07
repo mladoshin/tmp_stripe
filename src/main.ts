@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { ValidationPipe } from '@nestjs/common';
 import * as helmet from 'helmet';
 import { LoggingInterceptor } from './middlewares/logging.interceptor';
+import { json } from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -18,6 +19,7 @@ async function bootstrap() {
     },
   });
 
+  app.use(json());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.use(helmet.default());
