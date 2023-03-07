@@ -60,11 +60,11 @@ export class CheckoutService {
         // Save stripe customer ID for user in database
         const user = await this.accountRepository.findOne({
           where: {
-            accountName,
+            AccountName: accountName,
           },
         });
 
-        user.stripeCustomerId = stripeId;
+        user.StripeCustomerId = stripeId;
 
         await this.accountRepository.save(user);
         break;
