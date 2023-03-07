@@ -20,6 +20,7 @@ import { UtilsModule } from './utils/utils.module';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: false,
+      logging: ['query', 'error'],
     }),
     CheckoutModule,
     UtilsModule,
