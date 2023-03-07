@@ -335,7 +335,7 @@
           fetch(baseCheckoutUrl, {
             method: 'POST',
             body: JSON.stringify({
-              contacts: currentContactsNumber,
+              contacts: Number(currentContactsNumber),
               plan,
               billingPeriod: currentBillingPeriod.toLowerCase(),
               accountName,
@@ -357,6 +357,10 @@
           }).finally(() => {
             button.innerHTML = 'Checkout';
           });
+        }
+      
+        if(params.accountName === undefined || params.accountName === null) {
+          error('Account name in URL should not be undefined');
         }
       }
     </script>
