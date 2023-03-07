@@ -3,8 +3,8 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 @Entity()
 export class Account {
   @PrimaryColumn()
-  accountName: string;
+  AccountName: string;
 
   @Column()
-  stripeCustomerId: string;
+  StripeCustomerId: string;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Plan } from 'src/enums/config';
 import Stripe from 'stripe';
 import { AccountRepository } from './account.repository';
@@ -71,10 +71,19 @@ export class StripeService {
 
   async createBillingPortalSession(customer: string) {
     // Retrieve customer ID from database
+    const account = await this.accountRepository.findOne({
+      where: {
+        AccountName: customer,
+      },
+    });
+
+    if (account === undefined) {
+      throw new BadRequestException('Could not find account ' + customer);
+    }
 
     // Create customer portal session
     const result = await this.stripe.billingPortal.sessions.create({
-      customer,
+      customer: account.StripeCustomerId,
       return_url: `https://ac.proteadigital.com`,
     });
 
