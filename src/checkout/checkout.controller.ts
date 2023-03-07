@@ -5,6 +5,7 @@ import {
   Headers,
   Req,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { StripeService } from 'src/utils/stripe/stripe.service';
 import { CheckoutService } from './checkout.service';
@@ -45,5 +46,11 @@ export class CheckoutController {
     }
 
     return this.checkoutService.stripeWebhookHandler(event);
+  }
+
+  @Get('/test')
+  async test(@Headers() headers) {
+    console.log(headers);
+    return { success: true };
   }
 }
