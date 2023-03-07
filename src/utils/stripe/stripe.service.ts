@@ -1,16 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Plan } from 'src/enums/config';
 import Stripe from 'stripe';
+import { Connection } from 'typeorm';
 import { AccountRepository } from './account.repository';
 
 @Injectable()
 export class StripeService {
   private stripe: Stripe;
+  private accountRepository: AccountRepository;
 
-  constructor(private readonly accountRepository: AccountRepository) {
+  constructor(private connection: Connection) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: '2022-11-15',
     });
+    this.accountRepository =
+      this.connection.getCustomRepository<AccountRepository>(AccountRepository);
   }
 
   /**
