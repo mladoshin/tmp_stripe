@@ -23,7 +23,12 @@ async function bootstrap() {
   app.use(
     json({
       verify: (req: any, res, buf, encoding) => {
-        if (req.headers['x-cc-webhook-signature'] && Buffer.isBuffer(buf)) {
+        // important to store rawBody for Stripe signature verification
+        if (
+          (req.headers['stripe-signature'] ||
+            req.headers['x-cc-webhook-signature']) &&
+          Buffer.isBuffer(buf)
+        ) {
           req.rawBody = cloneBuffer(buf);
         }
         return true;
