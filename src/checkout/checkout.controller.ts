@@ -10,6 +10,7 @@ import {
 import { StripeService } from 'src/utils/stripe/stripe.service';
 import { CheckoutService } from './checkout.service';
 import { CheckoutDto } from './dto/checkout.dto';
+import { CustomerPortalDto } from './dto/customer-portal.dto';
 
 @Controller('checkout')
 export class CheckoutController {
@@ -29,7 +30,7 @@ export class CheckoutController {
   }
 
   @Post('/customer-portal')
-  async customerPortal(@Body() dto: CheckoutDto) {
+  async customerPortal(@Body() dto: CustomerPortalDto) {
     return this.stripeService.createBillingPortalSession(dto.accountName);
   }
 
@@ -50,7 +51,6 @@ export class CheckoutController {
 
   @Get('/test')
   async test(@Headers() headers) {
-    console.log(headers);
     return { success: true };
   }
 }

@@ -188,8 +188,6 @@
       let sliderText;
       let billingPeriodRadio;
 
-      // TODO: Fix comma
-
       // Plans data
       const values = ['500', '1,000', '2,500', '5,000', '10,000', '25,000', '50,000', '75,000', '100,000'];
       const monthly = [
@@ -257,7 +255,7 @@
           // Update number of accounts
           const value = Number(slider.value);
 
-          currentContactsNumber = values[value];
+          currentContactsNumber = Number(values[value].replace(',', ''));
 
           sliderText.innerHTML = values[value];
 
