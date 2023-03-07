@@ -22,7 +22,7 @@ export class StripeService {
   async createCheckoutSession(priceId: string, accountName: string) {
     const result = await this.stripe.checkout.sessions.create({
       success_url: `https://${accountName}`,
-      cancel_url: process.env.STRIPE_CANCEL_URL || 'https://magmabots.com',
+      cancel_url: `https://${accountName}`,
       mode: 'subscription',
       line_items: [
         {
@@ -75,8 +75,7 @@ export class StripeService {
     // Create customer portal session
     const result = await this.stripe.billingPortal.sessions.create({
       customer,
-      return_url:
-        process.env.MAGMA_PORTAL_RETURN_URL || 'https://magmabots.com',
+      return_url: `https://ac.proteadigital.com`,
     });
 
     return {
