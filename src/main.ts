@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import * as helmet from 'helmet';
 import { LoggingInterceptor } from './middlewares/logging.interceptor';
 import { json } from 'body-parser';
+import * as cloneBuffer from 'clone-buffer';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -19,7 +20,17 @@ async function bootstrap() {
     },
   });
 
-  app.use(json());
+  app.use(
+    json({
+      verify: (req: any, res, buf, encoding) => {
+        if (req.headers['x-cc-webhook-signature'] && Buffer.isBuffer(buf)) {
+          req.rawBody = cloneBuffer(buf);
+        }
+        return true;
+      },
+    }),
+  );
+
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.use(helmet.default());
