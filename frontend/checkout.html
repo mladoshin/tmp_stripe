@@ -203,7 +203,7 @@
         [0, 0, 3108, 4548, 6468, 9588, 12708, 15828, 18948],
       ];
 
-      let currentContactsNumber;
+      let currentContactsNumber = 10000;
 
       Object.assign(HTMLCollection.prototype, {
         forEach(event) {
@@ -332,12 +332,12 @@
 
           fetch(baseCheckoutUrl, {
             method: 'POST',
-            body: {
+            body: JSON.stringify({
               contacts: currentContactsNumber,
               plan,
               billingPeriod: currentBillingPeriod.toLowerCase(),
               accountName,
-            },
+            }),
             headers: {
               'content-type': 'application/json',
             },

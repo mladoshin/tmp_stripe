@@ -5,7 +5,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CheckoutModule } from './checkout/checkout.module';
 import { UtilsModule } from './utils/utils.module';
-import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { WebhookModule } from './webhook/webhook.module';
     }),
     CheckoutModule,
     UtilsModule,
-    WebhookModule,
   ],
   controllers: [AppController],
   providers: [AppService],
