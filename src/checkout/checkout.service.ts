@@ -3,13 +3,19 @@ import { BillingPeriod, Plan } from 'src/enums/config';
 import { AccountRepository } from 'src/utils/stripe/account.repository';
 import { StripeService } from 'src/utils/stripe/stripe.service';
 import Stripe from 'stripe';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class CheckoutService {
+  private accountRepository: AccountRepository;
+
   constructor(
-    private readonly accountRepository: AccountRepository,
+    private connection: Connection,
     private readonly stripeService: StripeService,
-  ) {}
+  ) {
+    this.accountRepository =
+      this.connection.getCustomRepository<AccountRepository>(AccountRepository);
+  }
 
   async createCheckoutSession(
     contacts: number,
