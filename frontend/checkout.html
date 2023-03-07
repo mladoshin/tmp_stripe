@@ -188,6 +188,8 @@
       let sliderText;
       let billingPeriodRadio;
 
+      // TODO: Fix comma
+
       // Plans data
       const values = ['500', '1,000', '2,500', '5,000', '10,000', '25,000', '50,000', '75,000', '100,000'];
       const monthly = [
@@ -326,7 +328,7 @@
         checkout = (plan, button) => {
           button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
 
-          const accountName = params.accountName;
+          const accountName = params.accountName.substring(8);
 
           if(accountName === undefined) {
             return error('Account name is undefined.');
