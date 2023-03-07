@@ -255,7 +255,7 @@
           // Update number of accounts
           const value = Number(slider.value);
 
-          currentContactsNumber = value;
+          currentContactsNumber = values[value];
 
           sliderText.innerHTML = values[value];
 
@@ -323,7 +323,9 @@
         updatePrices();
 
         // Checkout function
-        checkout = (plan) => {
+        checkout = (plan, button) => {
+          button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+
           const accountName = params.accountName;
 
           if(accountName === undefined) {
@@ -341,12 +343,20 @@
             headers: {
               'content-type': 'application/json',
             },
-          }).then((result) => {
-
+          }).then((res) => res.json()).then((result) => {
+            if(result.error) {
+              error(result.message);
+            } else if(result.url) {
+              window.open(result.url,'_blank');
+            } else {
+              error('Something went wrong. Checkout URL undefined.');
+            }
           }).catch((err) => {
             console.error(err);
             error('Something failed in the network request.');
-          })
+          }).finally(() => {
+            button.innerHTML = 'Checkout';
+          });
         }
       }
     </script>
@@ -389,7 +399,7 @@
                       <h5 class="card-title text-uppercase text-center">Lite</h5>
                       <h6 class="card-price text-center"><span class="lite-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('lite')">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('lite', this)">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -399,7 +409,7 @@
                       <h5 class="card-title text-uppercase text-center">Plus</h5>
                       <h6 class="card-price text-center"><span class="plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('plus')">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('plus', this)">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -409,7 +419,7 @@
                       <h5 class="card-title text-uppercase text-center">Professional</h5>
                       <h6 class="card-price text-center"><span class="professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('professional')">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('professional', this)">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -419,7 +429,7 @@
                       <h5 class="card-title text-uppercase text-center">Enterprise</h5>
                       <h6 class="card-price text-center"><span class="enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('enterprise')">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('enterprise', this)">Checkout</a>
                   </div>
                 </div>
               </td>
