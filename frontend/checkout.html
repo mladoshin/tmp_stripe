@@ -176,8 +176,8 @@
     <script>
       let checkout;
 
-      const domain = '';
-      const baseCheckoutUrl = `https://${domain}/checkout`;
+      const domain = 'api.proteadigital.com';
+      const baseCheckoutUrl = `https://${domain}/checkout/create`;
 
       const params = new Proxy(new URLSearchParams(window.location.search), {
         get: (searchParams, prop) => searchParams.get(prop),
@@ -202,6 +202,8 @@
         [0, 0, 1788, 2508, 4068, 6588, 9708, 12708, 15348],
         [0, 0, 3108, 4548, 6468, 9588, 12708, 15828, 18948],
       ];
+
+      let currentContactsNumber;
 
       Object.assign(HTMLCollection.prototype, {
         forEach(event) {
@@ -253,6 +255,8 @@
           // Update number of accounts
           const value = Number(slider.value);
 
+          currentContactsNumber = value;
+
           sliderText.innerHTML = values[value];
 
           // Update prices
@@ -262,16 +266,64 @@
         updatePrices = () => {
           const value = Number(slider.value);
 
-          litePriceSpans.forEach((e) => e.innerHTML = `$${(currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[0][value]}`);
-          plusPriceSpans.forEach((e) => e.innerHTML = `$${(currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[1][value]}`);
-          professionalPriceSpans.forEach((e) => e.innerHTML = `$${(currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[2][value]}`);
-          enterprisePriceSpans.forEach((e) => e.innerHTML = `$${(currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[3][value]}`);
+          litePriceSpans.forEach((e) => {
+            const price = (currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[0][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+          plusPriceSpans.forEach((e) => {
+            const price = (currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[1][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+          professionalPriceSpans.forEach((e) => {
+            const price = (currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[2][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+          enterprisePriceSpans.forEach((e) => {
+            const price = (currentBillingPeriod === 'MONTHLY' ? monthly : yearly)[3][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
         }
 
         updatePrices();
 
         // Checkout function
-        checkout = () => {
+        checkout = (plan) => {
           const accountName = params.accountName;
 
           if(accountName === undefined) {
@@ -281,12 +333,19 @@
           fetch(baseCheckoutUrl, {
             method: 'POST',
             body: {
-              priceId,
+              contacts: currentContactsNumber,
+              plan,
+              billingPeriod: currentBillingPeriod.toLowerCase(),
               accountName,
             },
             headers: {
               'content-type': 'application/json',
             },
+          }).then((result) => {
+
+          }).catch((err) => {
+            console.error(err);
+            error('Something failed in the network request.');
           })
         }
       }
@@ -330,7 +389,7 @@
                       <h5 class="card-title text-uppercase text-center">Lite</h5>
                       <h6 class="card-price text-center"><span class="lite-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a href="#" class="btn btn-block btn-primary text-uppercase">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('lite')">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -340,7 +399,7 @@
                       <h5 class="card-title text-uppercase text-center">Plus</h5>
                       <h6 class="card-price text-center"><span class="plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a href="#" class="btn btn-block btn-primary text-uppercase">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('plus')">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -350,7 +409,7 @@
                       <h5 class="card-title text-uppercase text-center">Professional</h5>
                       <h6 class="card-price text-center"><span class="professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a href="#" class="btn btn-block btn-primary text-uppercase">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('professional')">Checkout</a>
                   </div>
                 </div>
               </td>
@@ -360,7 +419,7 @@
                       <h5 class="card-title text-uppercase text-center">Enterprise</h5>
                       <h6 class="card-price text-center"><span class="enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
                       <hr>
-                      <a href="#" class="btn btn-block btn-primary text-uppercase">Checkout</a>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('enterprise')">Checkout</a>
                   </div>
                 </div>
               </td>

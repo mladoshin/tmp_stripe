@@ -19,8 +19,10 @@ export class CheckoutController {
 
   @Post('/create')
   async checkout(@Body() dto: CheckoutDto) {
-    return this.stripeService.createCheckoutSession(
-      dto.priceId,
+    return this.checkoutService.createCheckoutSession(
+      dto.contacts,
+      dto.plan,
+      dto.billingPeriod,
       dto.accountName,
     );
   }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Plan } from 'src/enums/config';
 import Stripe from 'stripe';
 import { AccountRepository } from './account.repository';
 
@@ -39,6 +40,13 @@ export class StripeService {
     return {
       url: result.url,
     };
+  }
+
+  async getPricesByProduct(plan: Plan) {
+    return this.stripe.prices.list({
+      product: plan,
+      limit: 100,
+    });
   }
 
   /**

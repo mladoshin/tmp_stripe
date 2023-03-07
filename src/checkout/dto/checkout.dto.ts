@@ -1,8 +1,17 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { BillingPeriod, Plan } from 'src/enums/config';
 
 export class CheckoutDto {
   @IsNotEmpty()
-  priceId: string;
+  contacts: number;
+
+  @IsNotEmpty()
+  @IsEnum(Plan)
+  plan: Plan;
+
+  @IsNotEmpty()
+  @IsEnum(BillingPeriod)
+  billingPeriod: BillingPeriod;
 
   @IsNotEmpty()
   accountName: string;

@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { BillingPeriod, Plan } from 'src/enums/config';
 import { AccountRepository } from 'src/utils/stripe/account.repository';
 import { StripeService } from 'src/utils/stripe/stripe.service';
 import Stripe from 'stripe';
@@ -9,6 +10,35 @@ export class CheckoutService {
     private readonly accountRepository: AccountRepository,
     private readonly stripeService: StripeService,
   ) {}
+
+  async createCheckoutSession(
+    contacts: number,
+    plan: Plan,
+    billingPeriod: BillingPeriod,
+    accountName: string,
+  ) {
+    const priceIdsByContacts = (
+      await this.stripeService.getPricesByProduct(plan)
+    ).data.filter((p: Stripe.Price) => {
+      return p.metadata.contacts === contacts.toString();
+    });
+
+    const priceId = priceIdsByContacts.find((p: Stripe.Price) => {
+      if (billingPeriod === BillingPeriod.MONTHLY) {
+        return p.recurring.interval === 'month';
+      } else {
+        return p.recurring.interval === 'year';
+      }
+    });
+
+    if (priceId === undefined) {
+      throw new BadRequestException(
+        'We could not find a plan with this number of contacts.',
+      );
+    }
+
+    return this.stripeService.createCheckoutSession(priceId.id, accountName);
+  }
 
   async stripeWebhookHandler(event: any) {
     const subscription = await this.stripeService.getSubscription(
