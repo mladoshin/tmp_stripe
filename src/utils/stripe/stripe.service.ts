@@ -88,7 +88,7 @@ export class StripeService {
     // Create customer portal session
     const result = await this.stripe.billingPortal.sessions.create({
       customer: account.StripeCustomerId,
-      return_url: customer,
+      return_url: `https://${customer}`,
     });
 
     return {

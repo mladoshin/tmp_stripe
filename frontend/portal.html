@@ -19,9 +19,20 @@
         get: (searchParams, prop) => searchParams.get(prop),
       });
 
+
+      let errorModal;
+
       window.onload = () => {
         const accountName = params.accountName.substring(8);
       
+        errorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal'));
+
+        // Show error modal with message
+        error = (message) => {
+          document.getElementById('errorModalMessage').innerHTML = message;
+          errorModal.show();
+        }
+
         if(params.accountName === undefined || params.accountName === null) {
           error('Account name in URL should not be undefined');
         } else {
@@ -41,13 +52,26 @@
             } else {
               error('Something went wrong. Received undefined customer portal URL.');
             }
-          })
+          });
         }
       }
     </script>
     
   </head>
   <body>
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert" id="errorModalMessage"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
   </body>
 </html>
