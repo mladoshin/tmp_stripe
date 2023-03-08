@@ -88,7 +88,7 @@ export class StripeService {
     // Create customer portal session
     const result = await this.stripe.billingPortal.sessions.create({
       customer: account.StripeCustomerId,
-      return_url: `https://ac.proteadigital.com`,
+      return_url: customer,
     });
 
     return {
