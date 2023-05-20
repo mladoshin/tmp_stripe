@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { BillingPeriod, Plan } from 'src/enums/config';
 import { AccountRepository } from 'src/utils/stripe/account.repository';
 import { StripeService } from 'src/utils/stripe/stripe.service';
@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { Connection } from 'typeorm';
 
 import axios from 'axios';
+import { Console } from 'console';
 
 const GET_ACCOUNT_LIST =
   'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/get_account_list';
@@ -16,13 +17,15 @@ const UPDATE_ACCOUNT_PLAN =
 @Injectable()
 export class CheckoutService {
   private accountRepository: AccountRepository;
-
+  private logger: ConsoleLogger;
   private accountIds: Map<string, number>;
 
   constructor(
     private connection: Connection,
     private readonly stripeService: StripeService,
   ) {
+    this.logger = new ConsoleLogger();
+
     this.accountRepository =
       this.connection.getCustomRepository<AccountRepository>(AccountRepository);
 
@@ -110,7 +113,21 @@ export class CheckoutService {
           billing_profile: 'N7HBN4G',
         };
 
-        console.log(data);
+        try {
+          this.logger.debug(
+            `Updating plan for ${accountName} to ${tier} ${contacts} contacts`,
+          );
+
+          const result = await axios.post(UPDATE_ACCOUNT_PLAN, data, {
+            headers: {
+              'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
+            },
+          });
+
+          this.logger.log(result.data);
+        } catch (e) {
+          this.logger.error(e);
+        }
 
         // Integrate with ActiveCampaign (call endpoint to credit accounts)
         // https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit/proteatwotrial.activehosted.com
@@ -150,15 +167,13 @@ export class CheckoutService {
         break;
       case 'checkout.session.completed':
         // Save stripe customer ID for user in database
-        const user = await this.accountRepository.findOne({
-          where: {
+        await this.accountRepository.upsert(
+          {
             AccountName: accountName,
+            StripeCustomerId: stripeId,
           },
-        });
-
-        user.StripeCustomerId = stripeId;
-
-        await this.accountRepository.save(user);
+          ['AccountName'],
+        );
         break;
     }
   }
