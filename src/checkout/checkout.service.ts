@@ -5,9 +5,19 @@ import { StripeService } from 'src/utils/stripe/stripe.service';
 import Stripe from 'stripe';
 import { Connection } from 'typeorm';
 
+import axios from 'axios';
+
+const GET_ACCOUNT_LIST =
+  'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/get_account_list';
+
+const UPDATE_ACCOUNT_PLAN =
+  'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit/proteatwotrial.activehosted.com';
+
 @Injectable()
 export class CheckoutService {
   private accountRepository: AccountRepository;
+
+  private accountIds: Map<string, number>;
 
   constructor(
     private connection: Connection,
@@ -15,6 +25,8 @@ export class CheckoutService {
   ) {
     this.accountRepository =
       this.connection.getCustomRepository<AccountRepository>(AccountRepository);
+
+    this.accountIds = new Map<string, number>();
   }
 
   async createCheckoutSession(
@@ -60,7 +72,76 @@ export class CheckoutService {
 
     switch (event.type) {
       case 'invoice.paid':
+        if (this.accountIds.get(accountName) === undefined) {
+          const result = await axios.get(GET_ACCOUNT_LIST, {
+            headers: {
+              'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
+            },
+          });
+
+          result.data.accounts.forEach(({ account_name, account_id }) => {
+            this.accountIds.set(account_name, account_id);
+          });
+        }
+
+        const data = {
+          currency: 'USD',
+          billing_interval: 1,
+          products: [
+            {
+              code: 'marketing',
+              tier: 'lite',
+              entitlements: [
+                {
+                  code: 'contacts',
+                  limit: {
+                    purchased_units: 500,
+                  },
+                },
+              ],
+            },
+          ],
+          account_id: this.accountIds.get(accountName),
+          billing_profile: 'N7HBN4G',
+        };
+
+        console.log(data);
+
         // Integrate with ActiveCampaign (call endpoint to credit accounts)
+        // https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit/proteatwotrial.activehosted.com
+        //   {
+        //     "currency": "USD",
+        //     "billing_interval": 1,
+        //     "products": [{
+        //         "code": "em",
+        //         "tier": "lite",
+        //         "entitlements": [{
+        //             "code": "contacts",
+        //             "limit": {
+        //                 "purchased_units": 1000
+        //             }
+        //         }]
+        //     }]
+        // }
+
+        // {
+        //     "code": "sms",
+        //     "tier": "basic",
+        //     "entitlements": [
+        //         {
+        //             "code": "sms-credits",
+        //             "limit": {
+        //                 "purchased_units": 1
+        //             }
+        //         },
+        //         {
+        //             "code": "sms",
+        //             "limit": {
+        //                 "purchased_units": 1
+        //             }
+        //         }
+        //     ]
+        // }
         break;
       case 'checkout.session.completed':
         // Save stripe customer ID for user in database
