@@ -84,18 +84,23 @@ export class CheckoutService {
           });
         }
 
+        const tier =
+          event.data.object.lines.data[0].plan.nickname.split(' ')[0];
+        const contacts =
+          event.data.object.lines.data[0].plan.metadata.limit_subscribers;
+
         const data = {
           currency: 'USD',
           billing_interval: 1,
           products: [
             {
               code: 'marketing',
-              tier: 'lite',
+              tier,
               entitlements: [
                 {
                   code: 'contacts',
                   limit: {
-                    purchased_units: 500,
+                    purchased_units: contacts,
                   },
                 },
               ],
