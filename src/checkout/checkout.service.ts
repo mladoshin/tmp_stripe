@@ -38,6 +38,24 @@ export class CheckoutService {
     billingPeriod: BillingPeriod,
     accountName: string,
   ) {
+    // Ensure account name exists
+    if (this.accountIds.get(accountName) === undefined) {
+      // Search in get_account_list endopint
+      const result = await axios.get(GET_ACCOUNT_LIST, {
+        headers: {
+          'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
+        },
+      });
+
+      result.data.accounts.forEach(({ account_name, account_id }) => {
+        this.accountIds.set(account_name, account_id);
+      });
+
+      if (this.accountIds.get(accountName) === undefined) {
+        throw new BadRequestException(`Account ${accountName} does not exist.`);
+      }
+    }
+
     const prices = (await this.stripeService.getPrices()).data;
 
     const priceIdsByContacts = prices.filter((p: Stripe.Price) => {
@@ -117,6 +135,8 @@ export class CheckoutService {
           this.logger.debug(
             `Updating plan for ${accountName} to ${tier} ${contacts} contacts`,
           );
+
+          this.logger.debug(data);
 
           const result = await axios.post(UPDATE_ACCOUNT_PLAN, data, {
             headers: {
