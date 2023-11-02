@@ -22,6 +22,7 @@ export class CheckoutController {
   @Post('/create')
   async checkout(@Body() dto: CheckoutDto) {
     return this.checkoutService.createCheckoutSession(
+      dto.checkoutType,
       dto.contacts,
       dto.plan,
       dto.billingPeriod,

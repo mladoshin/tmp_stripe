@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Plan } from 'src/enums/config';
+import { BillingPeriod, Plan, SubscriptionType } from 'src/enums/config';
 import Stripe from 'stripe';
 import { Connection } from 'typeorm';
 import { AccountRepository } from './account.repository';
@@ -49,6 +49,17 @@ export class StripeService {
   async getPrices() {
     return this.stripe.prices.list({
       limit: 100,
+    });
+  }
+
+  async searchPrices(
+    code: SubscriptionType,
+    tier: Plan,
+    billingInterval: BillingPeriod,
+    limitSubscriber: number,
+  ) {
+    return this.stripe.prices.search({
+      query: `metadata['billing_interval']:'${billingInterval}' AND metadata['code']:'${code}' AND metadata['limit_subscribers']:'${limitSubscriber}'  AND metadata['tier']:'${tier}'`,
     });
   }
 

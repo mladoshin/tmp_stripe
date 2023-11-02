@@ -6,6 +6,12 @@ export enum Plan {
 }
 
 export enum BillingPeriod {
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
+  MONTHLY = 'month',
+  YEARLY = 'year',
+}
+
+export enum SubscriptionType {
+  Email = 'marketing',
+  Sales = 'sales',
+  Bundle = 'marketing-sales-bundle',
 }

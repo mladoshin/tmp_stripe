@@ -8,7 +8,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
-    <title>Hello, world!</title>
+    <title>Checkout</title>
 
     <style type="text/css">
       section.pricing {
@@ -186,6 +186,8 @@
       let errorModal;
       let slider;
       let sliderText;
+      let bundleSlider;
+      let bundleSliderText;
       let billingPeriodRadio;
 
       // Plans data
@@ -203,7 +205,21 @@
         [0, 0, 3108, 4548, 6468, 9588, 12708, 15828, 18948],
       ];
 
+      // Bundle Plans Data
+      const bundleValues = ['1,000', '2,500', '5,000', '10,000', '25,000', '50,000', '75,000', '100,000', '150,000'];
+      const monthlyBundle = [
+        [116, 171, 232, 333, 520, 745, 957, 1145, 1357], // plus
+        [0, 482, 557, 719, 981, 306, 619, 894, 13027], // professional
+        [0, 918, 1069, 1269, 1594, 1918, 2244, 2569, 2969], // enterprise
+      ];
+      const yearlyBundle = [
+        [1114, 1642, 2227, 3197, 4992, 7152, 9187, 10992, 13027], // plus
+        [0, 4627, 5347, 6902, 9418, 12538, 15542, 18182, 19978], // professional
+        [0, 8813, 10262, 12182, 15302, 18413, 21542, 24662, 28502], // enterprise
+      ];
+
       let currentContactsNumber = 10000;
+      let currentBundleContactNumbers = 25000;
 
       Object.assign(HTMLCollection.prototype, {
         forEach(event) {
@@ -212,7 +228,11 @@
       });
           
       let setBillingPeriod;
+      let setBillingPeriodForSales;
+      let setBillingPeriodForBundle;
       let currentBillingPeriod = 'MONTHLY';
+      let currentSalesBillingPeriod = 'MONTHLY';
+      let currentBundleBillingPeriod = 'MONTHLY';
 
       window.onload = () => {
         setBillingPeriod = (period) => {
@@ -234,16 +254,67 @@
 
           updatePrices();
         }
+
+        setBillingPeriodForSales = (period) => {
+          if(period === 'MONTHLY') {
+            currentSalesBillingPeriod = 'MONTHLY';
+            document.getElementsByClassName('billing-period-text-sales').forEach((element) => element.innerHTML = 'month');
+            document.getElementById('set-monthly-sales-btn').classList.remove('btn-secondary');
+            document.getElementById('set-monthly-sales-btn').classList.add('btn-primary');
+            document.getElementById('set-yearly-sales-btn').classList.remove('btn-primary');
+            document.getElementById('set-yearly-sales-btn').classList.add('btn-secondary');
+          } else {
+            currentSalesBillingPeriod = 'YEARLY';
+            document.getElementsByClassName('billing-period-text-sales').forEach((element) => element.innerHTML = 'year');
+            document.getElementById('set-yearly-sales-btn').classList.remove('btn-secondary');
+            document.getElementById('set-yearly-sales-btn').classList.add('btn-primary');
+            document.getElementById('set-monthly-sales-btn').classList.remove('btn-primary');
+            document.getElementById('set-monthly-sales-btn').classList.add('btn-secondary');
+          }
+
+          updateSalePrices();
+        }
+
+        setBillingPeriodForBundle = (period) => {
+          if(period === 'MONTHLY') {
+            currentBundleBillingPeriod = 'MONTHLY';
+            document.getElementsByClassName('billing-period-text-bundle').forEach((element) => element.innerHTML = 'month');
+            document.getElementById('set-monthly-bundle-btn').classList.remove('btn-secondary');
+            document.getElementById('set-monthly-bundle-btn').classList.add('btn-primary');
+            document.getElementById('set-yearly-bundle-btn').classList.remove('btn-primary');
+            document.getElementById('set-yearly-bundle-btn').classList.add('btn-secondary');
+          } else {
+            currentBundleBillingPeriod = 'YEARLY';
+            document.getElementsByClassName('billing-period-text-bundle').forEach((element) => element.innerHTML = 'year');
+            document.getElementById('set-yearly-bundle-btn').classList.remove('btn-secondary');
+            document.getElementById('set-yearly-bundle-btn').classList.add('btn-primary');
+            document.getElementById('set-monthly-bundle-btn').classList.remove('btn-primary');
+            document.getElementById('set-monthly-bundle-btn').classList.add('btn-secondary');
+          }
+
+          updateBundlePrices();
+        }
         
         errorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal'));
         slider = document.getElementById('slider');
         sliderText = document.getElementById('number-of-contacts');
+        bundleSlider = document.getElementById('bundle-slider');
+        bundleSliderText = document.getElementById('bundle-number-of-contacts');
         billingPeriodRadio = document.getElementsByName('billing-period')[0];
 
         litePriceSpans = document.getElementsByClassName('lite-monthly-price');
         plusPriceSpans = document.getElementsByClassName('plus-monthly-price');
         professionalPriceSpans = document.getElementsByClassName('professional-monthly-price');
         enterprisePriceSpans = document.getElementsByClassName('enterprise-monthly-price');
+
+        const bundlePlusPriceSpans = document.getElementsByClassName('bundle-plus-monthly-price');
+        const bundleProfessionalPriceSpans = document.getElementsByClassName('bundle-professional-monthly-price');
+        const bundleEnterprisePriceSpans = document.getElementsByClassName('bundle-enterprise-monthly-price');
+
+
+        const salePlusPriceSpans = document.getElementsByClassName('sale-plus-monthly-price');
+        const saleProfessionalPriceSpans = document.getElementsByClassName('sale-professional-monthly-price');
+        const saleEnterprisePriceSpans = document.getElementsByClassName('sale-enterprise-monthly-price');
 
         // Show error modal with message
         error = (message) => {
@@ -263,7 +334,19 @@
           updatePrices();
         });
 
-        updatePrices = () => {
+        bundleSlider.addEventListener('input', () => {
+          // Update number of accounts
+          const value = Number(bundleSlider.value);
+
+          currentBundleContactNumbers = Number(bundleValues[value].replace(',', ''));
+
+          bundleSliderText.innerHTML = bundleValues[value];
+
+          // Update prices
+          updateBundlePrices();
+        });
+
+        const updatePrices = () => {
           const value = Number(slider.value);
 
           litePriceSpans.forEach((e) => {
@@ -318,12 +401,122 @@
 
             e.innerHTML = `$${price}`;
           });
+
+        }
+
+        const updateSalePrices = () => {
+
+          salePlusPriceSpans.forEach((e) => {
+            const price = (currentSalesBillingPeriod === 'MONTHLY' ? 23 : 228);
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+
+          saleProfessionalPriceSpans.forEach((e) => {
+            const price = (currentSalesBillingPeriod === 'MONTHLY' ? 59 : 588);
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+
+          saleEnterprisePriceSpans.forEach((e) => {
+            const price = (currentSalesBillingPeriod === 'MONTHLY' ? 119 : 1188);
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+
+        }
+
+        const updateBundlePrices = () => {
+          const value = Number(bundleSlider.value);
+
+          bundlePlusPriceSpans.forEach((e) => {
+            const price = (currentBundleBillingPeriod === 'MONTHLY' ? monthlyBundle : yearlyBundle)[0][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+          bundleProfessionalPriceSpans.forEach((e) => {
+            const price = (currentBundleBillingPeriod === 'MONTHLY' ? monthlyBundle : yearlyBundle)[1][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+          bundleEnterprisePriceSpans.forEach((e) => {
+            const price = (currentBundleBillingPeriod === 'MONTHLY' ? monthlyBundle : yearlyBundle)[2][value];
+
+            if(price === 0) {
+              // Hide checkout for Lite
+              e.parentNode.parentNode.classList.add('d-none');
+            } else {
+              // Show checkout for Lite
+              e.parentNode.parentNode.classList.remove('d-none');
+            }
+
+            e.innerHTML = `$${price}`;
+          });
+
         }
 
         updatePrices();
+        updateSalePrices();
+        updateBundlePrices();
 
         // Checkout function
-        checkout = (plan, button) => {
+        checkout = (type, plan, button, currentContacts = null) => {
+          let contactNumber = 0;
+          let billingPeriod = '';
+          switch (type) {
+            case 'email':
+              contactNumber = currentContactsNumber;
+              billingPeriod = currentBillingPeriod;
+              break;
+            case 'sales':
+              contactNumber = currentContacts;
+              billingPeriod = currentSalesBillingPeriod;
+              break;
+            case 'bundle':
+              contactNumber = currentBundleContactNumbers;
+              billingPeriod = currentBundleBillingPeriod;
+              break;
+          }
           button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
 
           const accountName = params.accountName.substring(8);
@@ -335,9 +528,9 @@
           fetch(baseCheckoutUrl, {
             method: 'POST',
             body: JSON.stringify({
-              contacts: Number(currentContactsNumber),
+              contacts: Number(contactNumber),
               plan,
-              billingPeriod: currentBillingPeriod.toLowerCase(),
+              billingPeriod: billingPeriod.toLowerCase(),
               accountName,
             }),
             headers: {
@@ -367,6 +560,2489 @@
     
   </head>
   <body>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" aria-controls="email" aria-selected="true">Email</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="false">Sales</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="bundle-tab" data-bs-toggle="tab" data-bs-target="#bundle" type="button" role="tab" aria-controls="bundle" aria-selected="false">Bundle</button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="email" role="tabpanel" aria-labelledby="email-tab">
+        <section class="pricing py-5">
+          <div class="container">
+            <div class="slider text-center">
+              <h5 class="mb-3"><span id="number-of-contacts">10,000</span>&nbsp;contacts</h5>
+              <input type="range" class="form-range" min="0" max="8" step="1" id="slider">
+            </div>
+
+            <div class="w-100 text-center mb-2">
+
+              <button class="btn btn-sm btn-primary" onClick="setBillingPeriod('MONTHLY')" id="set-monthly-btn">Monthly</button>
+              <button class="btn btn-sm btn-secondary" onClick="setBillingPeriod('YEARLY')" id="set-yearly-btn">Yearly</button>
+            </div>
+
+            <table class="table table-bordered">
+              <thead>
+              <tr>
+                <th scope="row"></th>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Lite</h5>
+                      <h6 class="card-price text-center"><span class="lite-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('email', 'lite', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Plus</h5>
+                      <h6 class="card-price text-center"><span class="plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('email', 'plus', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Professional</h5>
+                      <h6 class="card-price text-center"><span class="professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('email', 'professional', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Enterprise</h5>
+                      <h6 class="card-price text-center"><span class="enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('email', 'enterprise', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              </thead>
+              <tbody>
+              <tr class="table-active">
+                <th colspan="5" scope="row">Channels</th>
+              </tr>
+              <tr>
+                <th scope="row">Email</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">SMS</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Drag & Drop Email Designer</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Forms</th>
+                <td class="text-center">
+                  Forms
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Mobile Apps</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Inbox Browser Extension</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Landing Pages</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Facebook Custom Audiences</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Facebook Lead Ads</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Site Messages</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Email Campaign Features</th>
+              </tr>
+              <tr>
+                <th scope="row">Email Campaigns</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Send Newsletters</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Content Manager</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 150+ Email Templates</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lists</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Inbox Preview (Email Testing)</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  5 per month
+                </td>
+                <td class="text-center">
+                  5 per month
+                </td>
+                <td class="text-center">
+                  unlimited
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Abandoned Cart</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Product Block</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Product Catalog</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Conditional Content</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Predictive Sending</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Automation</th>
+              </tr>
+              <tr>
+                <th scope="row">Marketing Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Email Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">SMS Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Ecommerce Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 850+ Automation Recipes</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Segmentation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automations Map</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead Scoring</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Conversions</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Split Automations</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Objects</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">User Seats</th>
+                <td class="text-center">
+                  1
+                </td>
+                <td class="text-center">
+                  3
+                </td>
+                <td class="text-center">
+                  5
+                </td>
+                <td class="text-center">
+                  10
+                </td>
+              </tr>
+
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Integrations</th>
+              </tr>
+              <tr>
+                <th scope="row">WooCommerce Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Shopify Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">BigCommerce Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Magento Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Square Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Salesforce Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Microsoft Dynamics 365 Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 870+ Integrations</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Tracking & Reporting</th>
+              </tr>
+              <tr>
+                <th scope="row">Site Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Link & Event Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automation Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Campaign Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Goals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Marketing Revenue Report</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Store Performance</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Attribution</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Advanced Features</th>
+              </tr>
+              <tr>
+                <th scope="row">API & Webhooks</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Unlimited Inactive Contacts</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom User Permissions</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Database Sync</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Account Domain</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Branded Forms & Landing Pages</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Single Sign-On (SSO)</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">HIPAA Support</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Uptime SLA</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Mailserver Domain</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="tab-pane" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+        <section class="pricing py-5">
+          <div class="container">
+            <div class="w-100 text-center mb-2">
+              <button class="btn btn-sm btn-primary" onClick="setBillingPeriodForSales('MONTHLY')" id="set-monthly-sales-btn">Monthly</button>
+              <button class="btn btn-sm btn-secondary" onClick="setBillingPeriodForSales('YEARLY')" id="set-yearly-sales-btn">Yearly</button>
+            </div>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th scope="row"></th>
+                  <td class="text-center">
+                    <div class="mb-5 mb-lg-0">
+                      <div class="card-body p-2">
+                        <h5 class="card-title text-uppercase text-center">Plus</h5>
+                        <h6 class="card-price text-center"><span class="sale-plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text-sales">month</span></span></h6>
+                        <hr>
+                        <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('sales', 'salesplus', this, '111111')">Checkout</a>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="mb-5 mb-lg-0">
+                      <div class="card-body p-2">
+                        <h5 class="card-title text-uppercase text-center">Professional</h5>
+                        <h6 class="card-price text-center"><span class="sale-professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text-sales">month</span></span></h6>
+                        <hr>
+                        <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('sales', 'salesprofessional', this, '111112')">Checkout</a>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="mb-5 mb-lg-0">
+                      <div class="card-body p-2">
+                        <h5 class="card-title text-uppercase text-center">Enterprise</h5>
+                        <h6 class="card-price text-center"><span class="sale-enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text-sales">month</span></span></h6>
+                        <hr>
+                        <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('sales', 'salesenterprise', this, '111113')">Checkout</a>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </thead>
+              <tbody>
+              <tr class="table-active">
+                <th colspan="5" scope="row">Channels</th>
+              </tr>
+              <tr>
+                <th scope="row">SMS</th>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead Capture Forms</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Mobile CRM App</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Facebook Lead Ads</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Inbox Browser Extension</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Automation</th>
+              </tr>
+              <tr>
+                <th scope="row">Sales Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">SMS Automation</th>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 850+ Automation Recipes</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 870+ Integrations</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Segmentation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automations Map</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Split Automations</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Objects</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">CRM</th>
+              </tr>
+              <tr>
+                <th scope="row">Deals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Accounts</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Deal Pipelines</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Account & Deal Management</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead Scoring</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sync Inbox with CRM</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Task Management & Reporting</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Notifications</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sales Engagement Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Direct, Synced Email with Contacts & Deals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Win Probability</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Tracking & Reporting</th>
+              </tr>
+              <tr>
+                <th scope="row">Site Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Link & Event Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automation Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Deal Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Store Performance</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Goals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sentiment Analysis</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Platform</th>
+              </tr>
+              <tr>
+                <th scope="row">Custom User Permissions</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">API & Webhooks</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Database Sync</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Remove ActiveCampaign Branding</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Single Sign-On (SSO)</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">HIPAA Support</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Uptime SLA</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="tab-pane" id="bundle" role="tabpanel" aria-labelledby="bundle-tab">
+        <section class="pricing py-5">
+          <div class="container">
+            <div class="slider text-center">
+              <h5 class="mb-3"><span id="bundle-number-of-contacts">25,000</span>&nbsp;contacts</h5>
+              <input type="range" class="form-range" min="0" max="8" step="1" id="bundle-slider">
+            </div>
+
+
+            <div class="w-100 text-center mb-2">
+              <button class="btn btn-sm btn-primary" onClick="setBillingPeriodForBundle('MONTHLY')" id="set-monthly-bundle-btn">Monthly</button>
+              <button class="btn btn-sm btn-secondary" onClick="setBillingPeriodForBundle('YEARLY')" id="set-yearly-bundle-btn">Yearly</button>
+            </div>
+            <table class="table table-bordered">
+              <thead>
+              <tr>
+                <th scope="row"></th>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Plus</h5>
+                      <h6 class="card-price text-center"><span class="bundle-plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text-bunle">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('bundle', 'bundleplus', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Professional</h5>
+                      <h6 class="card-price text-center"><span class="bundle-professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text-bundle">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('bundle', 'bundleprofessional', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="mb-5 mb-lg-0">
+                    <div class="card-body p-2">
+                      <h5 class="card-title text-uppercase text-center">Enterprise</h5>
+                      <h6 class="card-price text-center"><span class="bundle-enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text-bundle">month</span></span></h6>
+                      <hr>
+                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('bundle', 'bundleenterprise', this)">Checkout</a>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              </thead>
+              <tbody>
+              <tr class="table-active">
+                <th colspan="5" scope="row">Channels</th>
+              </tr>
+              <tr>
+                <th scope="row">Email</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Drag & Drop Email Designer</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">SMS</th>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Forms</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Landing Pages</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Facebook Custom Audiences</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Facebook Lead Ads</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Site Messages</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Mobile Apps</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Inbox Browser Extension</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Automation</th>
+              </tr>
+              <tr>
+                <th scope="row">Marketing Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Email Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sales Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">SMS Automation</th>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+                <td class="text-center">
+                  with SMS add-on
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">WooCommerce Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Shopify Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">BigCommerce Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Magento Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Square Integration</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Ecommerce Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 850+ Automation Recipes</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Access to 870+ Integrations</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automations Map</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead Scoring</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Segmentation</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Conversions</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Salesforce & MS Dynamics Integrations</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Split Automations</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Objects</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Campaigns</th>
+              </tr>
+              <tr>
+                <th scope="row">Email Campaigns</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Content Manager</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Email Templates</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Inbox Preview (Email Testing)</th>
+                <td class="text-center">
+                  5 per month
+                </td>
+                <td class="text-center">
+                  5 per month
+                </td>
+                <td class="text-center">
+                  5 per month
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lists</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Conditional Content</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Predictive Content</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Predictive Sending</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">CRM</th>
+              </tr>
+              <tr>
+                <th scope="row">Deals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Accounts</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Deal Pipelines</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Account & Deal Management</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead Scoring</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sync Inbox with CRM</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Task Management & Reporting</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Notifications</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sales Engagement Automation</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Direct, Synced Email with Contacts & Deals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Win Probability</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Tracking & Reporting</th>
+              </tr>
+              <tr>
+                <th scope="row">Site Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Link & Event Tracking</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Attribution</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Automation Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Campaign Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Deal Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Goals</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sentiment Analysis</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Reports</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Platform</th>
+              </tr>
+              <tr>
+                <th scope="row">User Seats</th>
+                <td class="text-center">
+                  5
+                </td>
+                <td class="text-center">
+                  10
+                </td>
+                <td class="text-center">
+                  15
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Email Sends</th>
+                <td class="text-center">
+                  10X Post 300K Contacts
+                </td>
+                <td class="text-center">
+                  10X Post 300K Contacts
+                </td>
+                <td class="text-center">
+                  10X Post 300K Contacts
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">API & Webhooks</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Unlimited Inactive Contacts</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom User Permissions</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Database Sync</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Account Domain</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Remove ActiveCampaign Branding</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Single Sign-On (SSO)</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">HIPAA Support)</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Uptime SLA</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Custom Mailserver Domain</th>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+
+              <tr class="table-active">
+                <th colspan="5" scope="row">Add-ons</th>
+              </tr>
+              <tr>
+                <th scope="row">Transactional Email (Postmark)</th>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+                <td class="text-center">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                </td>
+              </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+
     <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -380,1003 +3056,14 @@
       </div>
     </div>
 
-    <section class="pricing py-5">
-      <div class="container">
-        <div class="slider text-center">
-          <h5 class="mb-3"><span id="number-of-contacts">10,000</span>&nbsp;contacts</h5>
-          <input type="range" class="form-range" min="0" max="8" step="1" id="slider">
-        </div>
-
-        <div class="w-100 text-center mb-2">
-
-          <button class="btn btn-sm btn-primary" onClick="setBillingPeriod('MONTHLY')" id="set-monthly-btn">Monthly</button>
-          <button class="btn btn-sm btn-secondary" onClick="setBillingPeriod('YEARLY')" id="set-yearly-btn">Yearly</button>
-        </div>
-
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th scope="row"></th>
-              <td class="text-center">
-                <div class="mb-5 mb-lg-0">
-                  <div class="card-body p-2">
-                      <h5 class="card-title text-uppercase text-center">Lite</h5>
-                      <h6 class="card-price text-center"><span class="lite-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
-                      <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('lite', this)">Checkout</a>
-                  </div>
-                </div>
-              </td>
-              <td class="text-center">
-                <div class="mb-5 mb-lg-0">
-                  <div class="card-body p-2">
-                      <h5 class="card-title text-uppercase text-center">Plus</h5>
-                      <h6 class="card-price text-center"><span class="plus-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
-                      <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('plus', this)">Checkout</a>
-                  </div>
-                </div>
-              </td>
-              <td class="text-center">
-                <div class="mb-5 mb-lg-0">
-                  <div class="card-body p-2">
-                      <h5 class="card-title text-uppercase text-center">Professional</h5>
-                      <h6 class="card-price text-center"><span class="professional-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
-                      <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('professional', this)">Checkout</a>
-                  </div>
-                </div>
-              </td>
-              <td class="text-center">
-                <div class="mb-5 mb-lg-0">
-                  <div class="card-body p-2">
-                      <h5 class="card-title text-uppercase text-center">Enterprise</h5>
-                      <h6 class="card-price text-center"><span class="enterprise-monthly-price">$0</span><span class="period">/<span class="billing-period-text">month</span></span></h6>
-                      <hr>
-                      <a class="btn btn-block btn-primary text-uppercase" onClick="checkout('enterprise', this)">Checkout</a>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="table-active">
-              <th colspan="5" scope="row">Channels</th>
-            </tr>
-            <tr>
-              <th scope="row">Email</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">SMS</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Drag & Drop Email Designer</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Forms</th>
-              <td class="text-center">
-                Forms
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Mobile Apps</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Inbox Browser Extension</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Landing Pages</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Facebook Custom Audiences</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Facebook Lead Ads</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Site Messages</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-
-
-            <tr class="table-active">
-              <th colspan="5" scope="row">Email Campaign Features</th>
-            </tr>
-            <tr>
-              <th scope="row">Email Campaigns</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Send Newsletters</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Content Manager</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Access to 150+ Email Templates</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Lists</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Inbox Preview (Email Testing)</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                5 per month
-              </td>
-              <td class="text-center">
-                5 per month
-              </td>
-              <td class="text-center">
-                unlimited
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Abandoned Cart</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Product Block</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Product Catalog</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Conditional Content</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Predictive Sending</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-
-
-
-            <tr class="table-active">
-              <th colspan="5" scope="row">Automation</th>
-            </tr>
-            <tr>
-              <th scope="row">Marketing Automation</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Email Automation</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">SMS Automation</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-              <td class="text-center">
-                with SMS add-on
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Ecommerce Automation</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Access to 850+ Automation Recipes</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Segmentation</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Automations Map</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Lead Scoring</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Conversions</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Split Automations</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom Objects</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">User Seats</th>
-              <td class="text-center">
-                1
-              </td>
-              <td class="text-center">
-                3
-              </td>
-              <td class="text-center">
-                5
-              </td>
-              <td class="text-center">
-                10
-              </td>
-            </tr>
-
-
-
-            <tr class="table-active">
-              <th colspan="5" scope="row">Integrations</th>
-            </tr>
-            <tr>
-              <th scope="row">WooCommerce Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Shopify Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">BigCommerce Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Magento Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Square Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Salesforce Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Microsoft Dynamics 365 Integration</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Access to 870+ Integrations</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-
-            
-
-            <tr class="table-active">
-              <th colspan="5" scope="row">Tracking & Reporting</th>
-            </tr>
-            <tr>
-              <th scope="row">Site Tracking</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Link & Event Tracking</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Automation Reports</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Campaign Reports</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Goals</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Marketing Revenue Report</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Store Performance</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Attribution</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom Reports</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-
-
-
-            <tr class="table-active">
-              <th colspan="5" scope="row">Advanced Features</th>
-            </tr>
-            <tr>
-              <th scope="row">API & Webhooks</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Unlimited Inactive Contacts</th>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom User Permissions</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Database Sync</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom Account Domain</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom Branded Forms & Landing Pages</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Single Sign-On (SSO)</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">HIPAA Support</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Uptime SLA</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Custom Mailserver Domain</th>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-x-circle-fill text-danger"></i>
-              </td>
-              <td class="text-center">
-                <i class="bi bi-check-circle-fill text-success"></i>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+
+    <script>
+      var firstTabEl = document.querySelector('#myTab li:last-child a')
+      var firstTab = new bootstrap.Tab(firstTabEl)
+
+      firstTab.show()
+    </script>
   </body>
 </html>

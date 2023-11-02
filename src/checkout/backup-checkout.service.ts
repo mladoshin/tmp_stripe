@@ -1,16 +1,19 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
-import { BillingPeriod, Plan, SubscriptionType } from 'src/enums/config';
+import { BillingPeriod, Plan } from 'src/enums/config';
 import { AccountRepository } from 'src/utils/stripe/account.repository';
 import { StripeService } from 'src/utils/stripe/stripe.service';
+import Stripe from 'stripe';
 import { Connection } from 'typeorm';
-
+import * as fs from 'fs';
+import * as path from 'path';
 import axios from 'axios';
+import { Console } from 'console';
 
 const GET_ACCOUNT_LIST =
   'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/get_account_list';
 
-const UPDATE_ACCOUNT_PLAN =
-  'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit';
+// const UPDATE_ACCOUNT_PLAN =
+// 'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit/proteatwotrial.activehosted.com';
 
 @Injectable()
 export class CheckoutService {
@@ -31,7 +34,6 @@ export class CheckoutService {
   }
 
   async createCheckoutSession(
-    checkoutType: SubscriptionType,
     contacts: number,
     plan: Plan,
     billingPeriod: BillingPeriod,
@@ -40,7 +42,11 @@ export class CheckoutService {
     // Ensure account name exists
     if (this.accountIds.get(accountName) === undefined) {
       // Search in get_account_list endopint
-      const result = await this.getAccountList(accountName);
+      const result = await axios.get(GET_ACCOUNT_LIST, {
+        headers: {
+          'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
+        },
+      });
 
       result.data.accounts.forEach(({ account_name, account_id }) => {
         this.accountIds.set(account_name, account_id);
@@ -51,22 +57,31 @@ export class CheckoutService {
       }
     }
 
-    const prices = (
-      await this.stripeService.searchPrices(
-        checkoutType,
-        plan,
-        billingPeriod,
-        contacts,
-      )
-    ).data;
+    const prices = (await this.stripeService.getPrices()).data;
 
-    if (prices.length === 0) {
+    const priceIdsByContacts = prices.filter((p: Stripe.Price) => {
+      return p.metadata.limit_subscribers === contacts.toString();
+    });
+
+    const filteredByProduct = priceIdsByContacts.filter((p) => {
+      return p.nickname.toLowerCase().indexOf(plan) !== -1;
+    });
+
+    const priceId = filteredByProduct.find((p: Stripe.Price) => {
+      if (billingPeriod === BillingPeriod.MONTHLY) {
+        return p.recurring.interval === 'month';
+      } else {
+        return p.recurring.interval === 'year';
+      }
+    });
+
+    if (priceId === undefined) {
       throw new BadRequestException(
         'We could not find a plan with this number of contacts.',
       );
     }
 
-    return this.stripeService.createCheckoutSession(prices[0].id, accountName);
+    return this.stripeService.createCheckoutSession(priceId.id, accountName);
   }
 
   async stripeWebhookHandler(event: any) {
@@ -74,55 +89,51 @@ export class CheckoutService {
       event.data.object.subscription || event.data.object.id,
     );
 
+    const filePath = path.join(process.cwd(), 'webhook.json');
+    fs.writeFileSync(filePath, JSON.stringify(subscription));
+    fs.writeFileSync(filePath, JSON.stringify({ message: 'Hello Test' }));
+
     const accountName = subscription.metadata.accountName;
     const stripeId = event.data.object.customer;
 
     switch (event.type) {
       case 'invoice.paid':
         if (this.accountIds.get(accountName) === undefined) {
-          const result = await this.getAccountList(accountName);
+          const result = await axios.get(GET_ACCOUNT_LIST, {
+            headers: {
+              'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
+            },
+          });
 
           result.data.accounts.forEach(({ account_name, account_id }) => {
             this.accountIds.set(account_name, account_id);
           });
         }
 
-        const price = event.data.object.lines.data[0].price;
-        const contacts = price.metadata.limit_subscribers;
-        const tier = price.metadata.tier;
-
-        let entitlements = [
-          {
-            code: 'contacts',
-            limit: {
-              purchased_units: contacts,
-            },
-          },
-        ];
-
-        if (price.metadata.code === SubscriptionType.Sales) {
-          entitlements = [
-            {
-              code: 'user-seats',
-              limit: {
-                purchased_units: 1,
-              },
-            },
-          ];
-        }
+        const tier =
+          event.data.object.lines.data[0].plan.nickname.split(' ')[0].toLowerCase();
+        const contacts =
+          event.data.object.lines.data[0].plan.metadata.limit_subscribers;
 
         const data = {
-          account_id: this.accountIds.get(accountName),
-          billing_interval: price.recurring.interval === 'year' ? 12 : 1,
-          billing_profile: 'N7HBN4G',
           currency: 'USD',
+          billing_interval: 1,
           products: [
             {
-              code: price.metadata.code,
+              code: 'marketing',
               tier,
-              entitlements,
+              entitlements: [
+                {
+                  code: 'contacts',
+                  limit: {
+                    purchased_units: contacts,
+                  },
+                },
+              ],
             },
           ],
+          account_id: this.accountIds.get(accountName),
+          billing_profile: 'N7HBN4G',
         };
 
         try {
@@ -130,19 +141,22 @@ export class CheckoutService {
             `Updating plan for ${accountName} to ${tier} ${contacts} contacts`,
           );
 
-          this.logger.debug(data);
+          const filePath = path.join(process.cwd(), 'data.json');
+          fs.writeFileSync(filePath, JSON.stringify(data));
 
-          const result = await axios.post(
-            `${UPDATE_ACCOUNT_PLAN}/${accountName}`,
-            data,
-            {
-              headers: {
-                'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
-              },
+          const url =
+            'https://internal-services-agencyapiv2.cluster.app-us1.com/api/v1/accounts/account_plan_edit/' +
+            accountName;
+
+          const result = await axios.post(url, data, {
+            headers: {
+              'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
             },
-          );
+          });
 
-          this.logger.log(result.data);
+          // this.logger.log(result.data);
+          const filePathResult = path.join(process.cwd(), 'result.json');
+          fs.writeFileSync(filePathResult, JSON.stringify(result.data));
         } catch (e) {
           this.logger.error(e);
         }
@@ -194,16 +208,5 @@ export class CheckoutService {
         );
         break;
     }
-  }
-
-  private async getAccountList(accountName = '') {
-    return await axios.get(GET_ACCOUNT_LIST, {
-      headers: {
-        'api-key': process.env.ACTIVE_CAMPAIGN_API_KEY,
-      },
-      params: {
-        search_account: accountName,
-      },
-    });
   }
 }
